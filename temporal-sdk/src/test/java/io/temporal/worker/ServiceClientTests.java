@@ -86,6 +86,40 @@ public class ServiceClientTests {
   }
 
   @Test
+  public void testNewUntypedWorkflowStubWithAssertions() {
+    // Arrange
+    String taskQueueName = "veryLongWorkflow";
+
+    // setup server
+    WorkerFactory factory = testEnv.getWorkerFactory();
+    Worker worker = factory.newWorker(taskQueueName);
+    worker.addWorkflowImplementationFactory(
+        ActivitiesWorkflow.class,
+        () -> {
+          return new ActivitiesWorkflow() {
+            @Override
+            public String execute(WorkflowParams params) {
+              assertEquals("JUnit", params.sender); // HERE
+              return "assertions passed";
+            }
+          };
+        });
+    factory.start();
+
+    // setup client
+    WorkflowOptions workflowOptions =
+        WorkflowOptions.newBuilder().setTaskQueue(taskQueueName).build();
+    WorkflowStub workflow =
+        testEnv.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
+
+    WorkflowParams params = new WorkflowParams();
+    params.sender = "JUnit";
+    workflow.start(params);
+
+    assertEquals("assertions passed", workflow.getResult(String.class));
+  }
+
+  @Test
   public void testBlockingStub() {
     // Arrange
     String taskQueueName = "veryLongWorkflow";
