@@ -21,10 +21,17 @@ package io.temporal.worker;
 
 import static io.temporal.testing.internal.SDKTestWorkflowRule.NAMESPACE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
+import io.temporal.api.common.v1.Payloads;
+import io.temporal.api.common.v1.WorkflowType;
+import io.temporal.api.taskqueue.v1.TaskQueue;
+import io.temporal.api.workflowservice.v1.StartWorkflowExecutionRequest;
+import io.temporal.api.workflowservice.v1.StartWorkflowExecutionResponse;
 import io.temporal.client.WorkflowClientOptions;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
+import io.temporal.common.converter.DataConverter;
 import io.temporal.testing.TestEnvironmentOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.workflow.WorkflowInterface;
@@ -77,6 +84,43 @@ public class ServiceClientTests {
 
     assertEquals("I'm done, JUnit", workflow.getResult(String.class));
   }
+
+  @Test
+  public void testBlockingStub() {
+    // Arrange
+    String taskQueueName = "veryLongWorkflow";
+
+    // setup server
+    WorkerFactory factory = testEnv.getWorkerFactory();
+    Worker worker = factory.newWorker(taskQueueName);
+    worker.registerWorkflowImplementationTypes(ActivitiesWorkflowImpl.class);
+    factory.start();
+
+    // setup client
+    WorkflowParams params = new WorkflowParams();
+    params.sender = "JUnit";
+
+    StartWorkflowExecutionRequest request =
+        StartWorkflowExecutionRequest.newBuilder()
+            .setRequestId("myId")
+            .setWorkflowType(WorkflowType.newBuilder().setName("ActivitiesWorkflow").build())
+            .setInput(
+                Payloads.newBuilder()
+                    .addPayloads(DataConverter.getDefaultInstance().toPayload(params).get())
+                    .build())
+            .setTaskQueue(TaskQueue.newBuilder().setName(taskQueueName).build())
+            .setNamespace(NAMESPACE)
+            .build();
+    StartWorkflowExecutionResponse response =
+        testEnv
+            .getWorkflowClient()
+            .getWorkflowServiceStubs()
+            .blockingStub()
+            .startWorkflowExecution(request);
+    assertNotNull(response.getRunId());
+  }
+
+  /* ----- workflow ----- */
 
   public static class WorkflowParams {
     public String sender;
