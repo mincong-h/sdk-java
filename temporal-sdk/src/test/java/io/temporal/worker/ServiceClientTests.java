@@ -39,13 +39,13 @@ public class ServiceClientTests {
 
   @Before
   public void setUp() {
-    WorkerFactoryOptions options = WorkerFactoryOptions.newBuilder().validateAndBuildWithDefaults();
-    WorkflowClientOptions clientOptions =
-        WorkflowClientOptions.newBuilder().setNamespace(NAMESPACE).build();
     TestEnvironmentOptions testOptions =
         TestEnvironmentOptions.newBuilder()
-            .setWorkflowClientOptions(clientOptions)
-            .setWorkerFactoryOptions(options)
+            // server
+            .setWorkerFactoryOptions(WorkerFactoryOptions.getDefaultInstance())
+            // client
+            .setWorkflowClientOptions(
+                WorkflowClientOptions.newBuilder().setNamespace(NAMESPACE).build())
             .build();
     testEnv = TestWorkflowEnvironment.newInstance(testOptions);
   }
