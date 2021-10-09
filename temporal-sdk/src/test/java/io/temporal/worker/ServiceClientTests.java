@@ -39,10 +39,7 @@ public class ServiceClientTests {
 
   @Before
   public void setUp() {
-    WorkerFactoryOptions options =
-        WorkerFactoryOptions.newBuilder(
-                WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(200).build())
-            .validateAndBuildWithDefaults();
+    WorkerFactoryOptions options = WorkerFactoryOptions.newBuilder().validateAndBuildWithDefaults();
     WorkflowClientOptions clientOptions =
         WorkflowClientOptions.newBuilder().setNamespace(NAMESPACE).build();
     TestEnvironmentOptions testOptions =
@@ -79,18 +76,15 @@ public class ServiceClientTests {
     WorkflowStub workflow =
         testEnv.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
 
-    WorkflowParams params = new WorkflowParams("JUnit");
+    WorkflowParams params = new WorkflowParams();
+    params.sender = "JUnit";
     workflow.start(params);
 
     assertEquals("I'm done, JUnit", workflow.getResult(String.class));
   }
 
   public static class WorkflowParams {
-    public final String sender;
-
-    public WorkflowParams(String sender) {
-      this.sender = sender;
-    }
+    public String sender;
   }
 
   @WorkflowInterface
