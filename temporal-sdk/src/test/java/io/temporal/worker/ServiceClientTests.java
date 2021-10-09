@@ -19,8 +19,10 @@
 
 package io.temporal.worker;
 
+import static io.temporal.testing.internal.SDKTestWorkflowRule.NAMESPACE;
+import static org.junit.Assert.assertEquals;
+
 import io.temporal.activity.ActivityInterface;
-import io.temporal.activity.ActivityOptions;
 import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowClientOptions;
 import io.temporal.client.WorkflowOptions;
@@ -28,20 +30,13 @@ import io.temporal.client.WorkflowStub;
 import io.temporal.testing.TestEnvironmentOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.workflow.*;
+import java.time.Duration;
+import java.util.UUID;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
-import static io.temporal.testing.internal.SDKTestWorkflowRule.NAMESPACE;
-import static org.junit.Assert.assertNotNull;
 
 // wip
 public class ServiceClientTests {
@@ -82,9 +77,10 @@ public class ServiceClientTests {
     w.ConcurrentCount = 50;
     w.PayloadSizeBytes = 10000;
     w.TaskQueueName = taskQueueName;
+    w.sender = "JUnit";
 
     workflow.start(w);
-    assertNotNull("I'm done.", workflow.getResult(String.class));
+    assertEquals("I'm done, JUnit", workflow.getResult(String.class));
     wrapper.close();
   }
 
@@ -120,6 +116,7 @@ public class ServiceClientTests {
     w.ConcurrentCount = 15;
     w.PayloadSizeBytes = 100;
     w.TaskQueueName = taskQueueName;
+    w.sender = "JUnit";
 
     // This will attempt to self evict given that there are only two threads available
     workflow.start(w);
@@ -132,7 +129,7 @@ public class ServiceClientTests {
         wrapper.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
     w.ConcurrentCount = 1;
     workflow2.start(w);
-    assertNotNull("I'm done.", workflow2.getResult(String.class));
+    assertEquals("I'm done, JUnit", workflow2.getResult(String.class));
     wrapper.close();
   }
 
@@ -167,7 +164,7 @@ public class ServiceClientTests {
   }
 
   public static class WorkflowParams {
-
+    public String sender;
     public int ChainSequence;
     public int ConcurrentCount;
     public String TaskQueueName;
@@ -186,32 +183,7 @@ public class ServiceClientTests {
 
     @Override
     public String execute(WorkflowParams params) {
-      SleepActivity activity =
-          Workflow.newActivityStub(
-              SleepActivity.class,
-              ActivityOptions.newBuilder()
-                  .setTaskQueue(params.TaskQueueName)
-                  .setScheduleToStartTimeout(Duration.ofMinutes(1))
-                  .setStartToCloseTimeout(Duration.ofMinutes(1))
-                  .setHeartbeatTimeout(Duration.ofSeconds(20))
-                  .build());
-
-      for (int i = 0; i < params.ChainSequence; i++) {
-        List<Promise<Void>> promises = new ArrayList<>();
-        for (int j = 0; j < params.ConcurrentCount; j++) {
-          byte[] bytes = new byte[params.PayloadSizeBytes];
-          new Random().nextBytes(bytes);
-          Promise<Void> promise = Async.procedure(activity::sleep, i, j, bytes);
-          promises.add(promise);
-        }
-
-        for (Promise<Void> promise : promises) {
-          promise.get();
-        }
-
-        Workflow.sleep(Duration.ofSeconds(params.TemporalSleepSeconds));
-      }
-      return "I'm done";
+      return "I'm done, " + params.sender;
     }
   }
 
