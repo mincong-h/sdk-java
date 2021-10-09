@@ -23,7 +23,6 @@ import static io.temporal.testing.internal.SDKTestWorkflowRule.NAMESPACE;
 import static org.junit.Assert.assertEquals;
 
 import io.temporal.activity.ActivityInterface;
-import io.temporal.client.WorkflowClient;
 import io.temporal.client.WorkflowClientOptions;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
@@ -38,31 +37,37 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// wip
 public class ServiceClientTests {
-
-  private TestEnvironmentWrapper wrapper;
+  private TestWorkflowEnvironment testEnv;
 
   @Before
   public void setUp() {
-    wrapper =
-        new TestEnvironmentWrapper(
-            WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(200).build());
+    WorkerFactoryOptions options =
+        WorkerFactoryOptions.newBuilder(
+                WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(200).build())
+            .validateAndBuildWithDefaults();
+    WorkflowClientOptions clientOptions =
+        WorkflowClientOptions.newBuilder().setNamespace(NAMESPACE).build();
+    TestEnvironmentOptions testOptions =
+        TestEnvironmentOptions.newBuilder()
+            .setWorkflowClientOptions(clientOptions)
+            .setWorkerFactoryOptions(options)
+            .build();
+    testEnv = TestWorkflowEnvironment.newInstance(testOptions);
   }
 
   @After
   public void tearDown() {
-    wrapper.close();
+    testEnv.close();
   }
 
   @Test
   public void longHistoryWorkflowsCompleteSuccessfully() {
-
     // Arrange
     String taskQueueName = "veryLongWorkflow";
 
     // setup server
-    WorkerFactory factory = wrapper.getWorkerFactory();
+    WorkerFactory factory = testEnv.getWorkerFactory();
     Worker worker = factory.newWorker(taskQueueName, WorkerOptions.newBuilder().build());
     worker.registerWorkflowImplementationTypes(ActivitiesWorkflowImpl.class);
     worker.registerActivitiesImplementations(new ActivitiesImpl());
@@ -76,7 +81,7 @@ public class ServiceClientTests {
             .setWorkflowTaskTimeout(Duration.ofSeconds(30))
             .build();
     WorkflowStub workflow =
-        wrapper.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
+        testEnv.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
 
     // Act
     // This will yield around 10000 events which is above the page limit returned by the server.
@@ -90,36 +95,6 @@ public class ServiceClientTests {
 
     workflow.start(w);
     assertEquals("I'm done, JUnit", workflow.getResult(String.class));
-  }
-
-  // Todo: refactor TestEnvironment to toggle between real and test service.
-  private static class TestEnvironmentWrapper {
-
-    private final TestWorkflowEnvironment testEnv;
-
-    public TestEnvironmentWrapper(WorkerFactoryOptions options) {
-      options = WorkerFactoryOptions.newBuilder(options).validateAndBuildWithDefaults();
-      WorkflowClientOptions clientOptions =
-          WorkflowClientOptions.newBuilder().setNamespace(NAMESPACE).build();
-      TestEnvironmentOptions testOptions =
-          TestEnvironmentOptions.newBuilder()
-              .setWorkflowClientOptions(clientOptions)
-              .setWorkerFactoryOptions(options)
-              .build();
-      testEnv = TestWorkflowEnvironment.newInstance(testOptions);
-    }
-
-    private WorkerFactory getWorkerFactory() {
-      return testEnv.getWorkerFactory();
-    }
-
-    private WorkflowClient getWorkflowClient() {
-      return testEnv.getWorkflowClient();
-    }
-
-    private void close() {
-      testEnv.close();
-    }
   }
 
   public static class WorkflowParams {
