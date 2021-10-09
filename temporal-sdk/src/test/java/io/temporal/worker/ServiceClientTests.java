@@ -29,24 +29,17 @@ import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
 import io.temporal.testing.TestEnvironmentOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
-import io.temporal.workflow.*;
+import io.temporal.workflow.WorkflowInterface;
+import io.temporal.workflow.WorkflowMethod;
 import java.time.Duration;
-import java.util.UUID;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // wip
 public class ServiceClientTests {
-
-  public boolean useExternalService = false;
-
-  @Rule public TestName testName = new TestName();
-
   @Test
-  public void longHistoryWorkflowsCompleteSuccessfully() throws InterruptedException {
+  public void longHistoryWorkflowsCompleteSuccessfully() {
 
     // Arrange
     String taskQueueName = "veryLongWorkflow";
@@ -54,12 +47,15 @@ public class ServiceClientTests {
     TestEnvironmentWrapper wrapper =
         new TestEnvironmentWrapper(
             WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(200).build());
+
+    // setup server
     WorkerFactory factory = wrapper.getWorkerFactory();
     Worker worker = factory.newWorker(taskQueueName, WorkerOptions.newBuilder().build());
     worker.registerWorkflowImplementationTypes(ActivitiesWorkflowImpl.class);
     worker.registerActivitiesImplementations(new ActivitiesImpl());
     factory.start();
 
+    // setup client
     WorkflowOptions workflowOptions =
         WorkflowOptions.newBuilder()
             .setTaskQueue(taskQueueName)
@@ -70,7 +66,7 @@ public class ServiceClientTests {
         wrapper.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
 
     // Act
-    // This will yeild around 10000 events which is above the page limit returned by the server.
+    // This will yield around 10000 events which is above the page limit returned by the server.
     WorkflowParams w = new WorkflowParams();
     w.TemporalSleepSeconds = 0;
     w.ChainSequence = 50;
@@ -81,55 +77,6 @@ public class ServiceClientTests {
 
     workflow.start(w);
     assertEquals("I'm done, JUnit", workflow.getResult(String.class));
-    wrapper.close();
-  }
-
-  @Test
-  public void selfEvictionDoesNotCauseDeadlock() throws InterruptedException {
-
-    // Arrange
-    String taskQueueName = "veryLongWorkflow" + UUID.randomUUID();
-
-    TestEnvironmentWrapper wrapper =
-        new TestEnvironmentWrapper(
-            WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(2).build());
-
-    WorkerFactory factory = wrapper.getWorkerFactory();
-    Worker worker = factory.newWorker(taskQueueName, WorkerOptions.newBuilder().build());
-    worker.registerWorkflowImplementationTypes(ActivitiesWorkflowImpl.class);
-    worker.registerActivitiesImplementations(new ActivitiesImpl());
-    factory.start();
-
-    WorkflowOptions workflowOptions =
-        WorkflowOptions.newBuilder()
-            .setTaskQueue(taskQueueName)
-            .setWorkflowRunTimeout(Duration.ofSeconds(250))
-            .setWorkflowTaskTimeout(Duration.ofSeconds(30))
-            .build();
-    WorkflowStub workflow =
-        wrapper.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
-
-    // Act
-    WorkflowParams w = new WorkflowParams();
-    w.TemporalSleepSeconds = 0;
-    w.ChainSequence = 1;
-    w.ConcurrentCount = 15;
-    w.PayloadSizeBytes = 100;
-    w.TaskQueueName = taskQueueName;
-    w.sender = "JUnit";
-
-    // This will attempt to self evict given that there are only two threads available
-    workflow.start(w);
-
-    // Wait enough time to trigger self eviction
-    Thread.sleep(Duration.ofSeconds(1).toMillis());
-
-    // Start a second workflow and kick the previous one out
-    WorkflowStub workflow2 =
-        wrapper.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
-    w.ConcurrentCount = 1;
-    workflow2.start(w);
-    assertEquals("I'm done, JUnit", workflow2.getResult(String.class));
     wrapper.close();
   }
 
