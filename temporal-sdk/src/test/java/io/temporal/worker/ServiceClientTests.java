@@ -29,7 +29,6 @@ import io.temporal.testing.TestEnvironmentOptions;
 import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
-import java.time.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,17 +61,13 @@ public class ServiceClientTests {
 
     // setup server
     WorkerFactory factory = testEnv.getWorkerFactory();
-    Worker worker = factory.newWorker(taskQueueName, WorkerOptions.newBuilder().build());
+    Worker worker = factory.newWorker(taskQueueName);
     worker.registerWorkflowImplementationTypes(ActivitiesWorkflowImpl.class);
     factory.start();
 
     // setup client
     WorkflowOptions workflowOptions =
-        WorkflowOptions.newBuilder()
-            .setTaskQueue(taskQueueName)
-            .setWorkflowRunTimeout(Duration.ofSeconds(250))
-            .setWorkflowTaskTimeout(Duration.ofSeconds(30))
-            .build();
+        WorkflowOptions.newBuilder().setTaskQueue(taskQueueName).build();
     WorkflowStub workflow =
         testEnv.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
 
