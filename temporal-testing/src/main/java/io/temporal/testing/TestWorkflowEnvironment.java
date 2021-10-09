@@ -87,6 +87,7 @@ import java.util.concurrent.TimeUnit;
  *
  * </code></pre>
  */
+// in-memory implementation of the Temporal service
 public interface TestWorkflowEnvironment {
 
   static TestWorkflowEnvironment newInstance() {
