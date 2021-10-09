@@ -22,7 +22,6 @@ package io.temporal.worker;
 import static io.temporal.testing.internal.SDKTestWorkflowRule.NAMESPACE;
 import static org.junit.Assert.assertEquals;
 
-import io.temporal.activity.ActivityInterface;
 import io.temporal.client.WorkflowClientOptions;
 import io.temporal.client.WorkflowOptions;
 import io.temporal.client.WorkflowStub;
@@ -34,8 +33,6 @@ import java.time.Duration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ServiceClientTests {
   private TestWorkflowEnvironment testEnv;
@@ -70,7 +67,6 @@ public class ServiceClientTests {
     WorkerFactory factory = testEnv.getWorkerFactory();
     Worker worker = factory.newWorker(taskQueueName, WorkerOptions.newBuilder().build());
     worker.registerWorkflowImplementationTypes(ActivitiesWorkflowImpl.class);
-    worker.registerActivitiesImplementations(new ActivitiesImpl());
     factory.start();
 
     // setup client
@@ -109,7 +105,7 @@ public class ServiceClientTests {
   @WorkflowInterface
   public interface ActivitiesWorkflow {
 
-    @WorkflowMethod()
+    @WorkflowMethod
     String execute(WorkflowParams params);
   }
 
@@ -118,20 +114,6 @@ public class ServiceClientTests {
     @Override
     public String execute(WorkflowParams params) {
       return "I'm done, " + params.sender;
-    }
-  }
-
-  @ActivityInterface
-  public interface SleepActivity {
-    void sleep(int chain, int concurrency, byte[] bytes);
-  }
-
-  public static class ActivitiesImpl implements SleepActivity {
-    private static final Logger log = LoggerFactory.getLogger("sleep-activity");
-
-    @Override
-    public void sleep(int chain, int concurrency, byte[] bytes) {
-      log.trace("sleep called");
     }
   }
 }
