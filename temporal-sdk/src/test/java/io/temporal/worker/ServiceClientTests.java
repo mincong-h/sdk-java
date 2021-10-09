@@ -32,21 +32,34 @@ import io.temporal.testing.TestWorkflowEnvironment;
 import io.temporal.workflow.WorkflowInterface;
 import io.temporal.workflow.WorkflowMethod;
 import java.time.Duration;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // wip
 public class ServiceClientTests {
+
+  private TestEnvironmentWrapper wrapper;
+
+  @Before
+  public void setUp() {
+    wrapper =
+        new TestEnvironmentWrapper(
+            WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(200).build());
+  }
+
+  @After
+  public void tearDown() {
+    wrapper.close();
+  }
+
   @Test
   public void longHistoryWorkflowsCompleteSuccessfully() {
 
     // Arrange
     String taskQueueName = "veryLongWorkflow";
-
-    TestEnvironmentWrapper wrapper =
-        new TestEnvironmentWrapper(
-            WorkerFactoryOptions.newBuilder().setMaxWorkflowThreadCount(200).build());
 
     // setup server
     WorkerFactory factory = wrapper.getWorkerFactory();
@@ -77,7 +90,6 @@ public class ServiceClientTests {
 
     workflow.start(w);
     assertEquals("I'm done, JUnit", workflow.getResult(String.class));
-    wrapper.close();
   }
 
   // Todo: refactor TestEnvironment to toggle between real and test service.
