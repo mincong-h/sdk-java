@@ -59,7 +59,7 @@ public class ServiceClientTests {
   }
 
   @Test
-  public void longHistoryWorkflowsCompleteSuccessfully() {
+  public void testNewUntypedWorkflowStub() {
     // Arrange
     String taskQueueName = "veryLongWorkflow";
 
@@ -79,27 +79,18 @@ public class ServiceClientTests {
     WorkflowStub workflow =
         testEnv.getWorkflowClient().newUntypedWorkflowStub("ActivitiesWorkflow", workflowOptions);
 
-    // Act
-    // This will yield around 10000 events which is above the page limit returned by the server.
-    WorkflowParams w = new WorkflowParams();
-    w.TemporalSleepSeconds = 0;
-    w.ChainSequence = 50;
-    w.ConcurrentCount = 50;
-    w.PayloadSizeBytes = 10000;
-    w.TaskQueueName = taskQueueName;
-    w.sender = "JUnit";
+    WorkflowParams params = new WorkflowParams("JUnit");
+    workflow.start(params);
 
-    workflow.start(w);
     assertEquals("I'm done, JUnit", workflow.getResult(String.class));
   }
 
   public static class WorkflowParams {
-    public String sender;
-    public int ChainSequence;
-    public int ConcurrentCount;
-    public String TaskQueueName;
-    public int PayloadSizeBytes;
-    public int TemporalSleepSeconds;
+    public final String sender;
+
+    public WorkflowParams(String sender) {
+      this.sender = sender;
+    }
   }
 
   @WorkflowInterface
