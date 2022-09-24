@@ -45,6 +45,11 @@ public class AuthorizationGrpcMetadataProvider implements GrpcMetadataProvider {
     this.authorizationTokenSupplier = authorizationTokenSupplier;
   }
 
+  /*
+    The value of the token is set in the metadata as a key value pair:
+
+      authorization: Bearer <token>
+   */
   @Override
   public Metadata getMetadata() {
     Metadata metadata = new Metadata();
