@@ -31,14 +31,12 @@ import javax.annotation.Nullable;
 
 public interface ServiceStubs<B, F> {
   /**
-   * @return Blocking (synchronous) stub that allows direct calls to service.
-   * ^^ this
+   * @return Blocking (synchronous) stub that allows direct calls to service. ^^ this
    */
   B blockingStub();
 
   /**
-   * @return Future (asynchronous) stub that allows direct calls to service.
-   * ^^ this
+   * @return Future (asynchronous) stub that allows direct calls to service. ^^ this
    */
   F futureStub();
 

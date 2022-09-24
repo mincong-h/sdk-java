@@ -6,6 +6,7 @@ apply plugin: 'idea' // IntelliJ plugin to see files generated from protos
 
 description = '''Temporal Workflow Java SDK'''
 
+// Temporal service client is built on top of gRPC
 dependencies {
     api(platform("io.grpc:grpc-bom:$grpcVersion"))
 

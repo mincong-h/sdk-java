@@ -32,8 +32,7 @@ package io.temporal.authorization;
  *
  * @see <a href="https://docs.temporal.io/docs/server/security/#format-of-json-web-tokens">Format of
  *     JWT</a>
- *
- * ^^ this
+ *     <p>^^ this
  */
 public interface AuthorizationTokenSupplier {
   /**

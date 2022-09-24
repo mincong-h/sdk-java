@@ -30,26 +30,26 @@ public class AuthorizationGrpcMetadataProvider implements GrpcMetadataProvider {
   private final AuthorizationTokenSupplier authorizationTokenSupplier;
 
   /*
-    The provider encapsulates an authorization token supplier, which allows you to supply a token
-    for the authorization.
+   The provider encapsulates an authorization token supplier, which allows you to supply a token
+   for the authorization.
 
-    This can be used as part of the stubs options. Here is an excerpt from the AuthorizationTokenTest:
+   This can be used as part of the stubs options. Here is an excerpt from the AuthorizationTokenTest:
 
-        WorkflowServiceStubsOptions stubOptions =
-            WorkflowServiceStubsOptions.newBuilder()
-                .addGrpcClientInterceptor(...)
-                .addGrpcMetadataProvider(new AuthorizationGrpcMetadataProvider(() -> AUTH_TOKEN))
-                .build();
-   */
+       WorkflowServiceStubsOptions stubOptions =
+           WorkflowServiceStubsOptions.newBuilder()
+               .addGrpcClientInterceptor(...)
+               .addGrpcMetadataProvider(new AuthorizationGrpcMetadataProvider(() -> AUTH_TOKEN))
+               .build();
+  */
   public AuthorizationGrpcMetadataProvider(AuthorizationTokenSupplier authorizationTokenSupplier) {
     this.authorizationTokenSupplier = authorizationTokenSupplier;
   }
 
   /*
-    The value of the token is set in the metadata as a key value pair:
+   The value of the token is set in the metadata as a key value pair:
 
-        authorization: Bearer <token>
-   */
+       authorization: Bearer <token>
+  */
   @Override
   public Metadata getMetadata() {
     Metadata metadata = new Metadata();
