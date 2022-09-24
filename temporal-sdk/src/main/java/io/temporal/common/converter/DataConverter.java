@@ -71,6 +71,8 @@ public interface DataConverter {
   }
 
   /**
+   * This method converts the given value to a payload, either for the headers or the input message.
+   *
    * @param value value to convert
    * @return a {@link Payload} which is a protobuf message containing byte-array serialized
    *     representation of {@code value}. Optional here is for legacy and backward compatibility

@@ -119,6 +119,9 @@ public class DefaultDataConverter implements DataConverter {
     return this;
   }
 
+  /**
+   * This is the default data converter which converts your input value T to Temporal payload.
+   */
   @Override
   public <T> Optional<Payload> toPayload(T value) throws DataConverterException {
     for (PayloadConverter converter : converters) {
