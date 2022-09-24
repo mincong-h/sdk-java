@@ -50,6 +50,11 @@ public interface WorkflowServiceStubs
           https://github.com/temporalio/api/tree/2cdf6dedc77b476c3d2eb9aaa60c59d0ed2842be
           This is attached to Git as a submodule.
 
+              ➜  sdk-java git:(mincong/notes|u=) cat .gitmodules
+              [submodule "temporal-serviceclient/src/main/proto"]
+                  path = temporal-serviceclient/src/main/proto
+                  url = https://github.com/temporalio/api.git
+
           This blocking stub contains methods to operate workflows:
             - start workflow execution
             - cancel workflow execution
