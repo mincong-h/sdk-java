@@ -55,6 +55,12 @@ public interface WorkflowServiceStubs
             - cancel workflow execution
             - terminate workflow execution
             - ...
+
+          The request and response types used by the stubs (blocking or future) are also generated
+          by the API contract mentioned above. For example:
+            - StartWorkflowExecutionRequest
+            - TerminateWorkflowExecutionRequest
+            - RequestCancelWorkflowExecutionRequest
          */
         WorkflowServiceGrpc.WorkflowServiceBlockingStub,
         WorkflowServiceGrpc.WorkflowServiceFutureStub> {
